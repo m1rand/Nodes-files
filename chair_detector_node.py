@@ -20,8 +20,8 @@ class ChairDetectorNode(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.saved_positions = []  # Сохраняем уже добавленные маркеры
-        self.id_counter = 0        # Счётчик маркеров
+        self.saved_positions = []  
+        self.id_counter = 0
 
     def calculate_elongation(self, cluster):
         if len(cluster) < 3:
