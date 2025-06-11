@@ -1,6 +1,3 @@
-# Файл: chair_detector_simple.py (ВЕРСИЯ 1.6 - Калибровка под конкретный стул)
-
-#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
@@ -13,28 +10,25 @@ class ChairDetectorSimpleNode(Node):
         super().__init__('chair_detector_simple')
         
         # =======================================================================
-        # ПАРАМЕТРЫ, ТОЧНО НАСТРОЕННЫЕ ПОД ВАШИ СКРИНШОТЫ
+        # НАЛАШТУВАННЯ
         # =======================================================================
-        # --- Кластеризация ---
-        self.DISTANCE_THRESHOLD = 0.15 # 15см, чтобы четко разделять ножки
+        # --- Кластерізація ---
+        self.DISTANCE_THRESHOLD = 0.15 # 15см
 
-        # --- Фильтры кластеров ---
-        # Как вы и сказали, от 4 до 8 точек. Дадим небольшой запас.
+        # --- Фільтри кластерів ---
         self.MIN_CLUSTER_POINTS = 4
         self.MAX_CLUSTER_POINTS = 15
 
-        # Радиус ~2см. Задаем очень узкий "коридор" вокруг этого значения.
+        # Радіус ~2см
         self.MIN_CLUSTER_RADIUS = 0.015  # 1.5 см
         self.MAX_CLUSTER_RADIUS = 0.025  # 2.5 см
 
-        # Вытянутость дуги.
+        # Витягнутість дуги
         self.MIN_ELONGATION = 1.15
         self.MAX_ELONGATION = 3.5
 
-        # КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Кривизна. Мы ищем очень пологие дуги.
-        # Средняя ошибка отклонения от прямой (в метрах)
-        self.MIN_CURVATURE_ERROR = 0.0003 # 0.3 мм. Допускаем почти прямые дуги.
-        self.MAX_CURVATURE_ERROR = 0.004  # до 4 мм. Отсекаем более крутые изгибы.
+        self.MIN_CURVATURE_ERROR = 0.0003 # 0.3 мм
+        self.MAX_CURVATURE_ERROR = 0.004  # до 4 мм
         # =======================================================================
         
         self.subscription = self.create_subscription(
@@ -63,7 +57,7 @@ class ChairDetectorSimpleNode(Node):
         return np.mean(distances)
 
     def scan_callback(self, msg: LaserScan):
-        # 1. Кластеризация
+        # 1. Кластерізація
         clusters = []
         cluster = []
         prev_point = None
@@ -82,7 +76,7 @@ class ChairDetectorSimpleNode(Node):
             prev_point = current_point
         if cluster: clusters.append(cluster)
 
-        # 2. Фильтрация
+        # 2. Фільтрація
         found_legs_count = 0
         for cluster in clusters:
             if not (self.MIN_CLUSTER_POINTS <= len(cluster) <= self.MAX_CLUSTER_POINTS): continue
@@ -99,7 +93,6 @@ class ChairDetectorSimpleNode(Node):
             linearity_error = self.calculate_linearity_error(cluster)
             if not (self.MIN_CURVATURE_ERROR < linearity_error < self.MAX_CURVATURE_ERROR): continue
 
-            # Если мы дошли до сюда, это наша цель!
             point_msg = Point(); point_msg.x = avg_x; point_msg.y = avg_y
             self.publisher_.publish(point_msg)
             found_legs_count += 1
